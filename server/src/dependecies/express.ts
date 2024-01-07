@@ -1,10 +1,12 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import routesV1 from '../api';
+import rateLimit from 'express-rate-limit';
+import routes from '../api';
+import config from '../config';
 
 export default ({ app }: { app: express.Application }): void => {
-  app.enable('trust proxy');
+  app.set('trust proxy', 1);
 
   app.use(helmet());
 
@@ -23,7 +25,13 @@ export default ({ app }: { app: express.Application }): void => {
     }),
   );
 
-  app.use('live-articles', routesV1());
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 500,
+  });
+  app.use(limiter);
+
+  app.use(`/live-articles${config.api.prefix}`, routes());
 
   app.use((_req, _res, next) => {
     const err = new Error('Not Found');

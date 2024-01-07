@@ -8,7 +8,7 @@ export default async ({
 }: {
   expressApp: Express;
 }): Promise<void> => {
-  const mongoConnection = await mongooseLoader();
+  await mongooseLoader();
   console.log('DB loaded and connected!');
 
   const userModel = {

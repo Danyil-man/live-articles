@@ -1,5 +1,8 @@
 import { Model, Document, LeanDocument } from 'mongoose';
 import { JwtPayload } from 'jsonwebtoken';
+import { IUser } from '../../interfaces/IUser';
+import { IComment } from '../../interfaces/IComments';
+import { IArticle } from '../../interfaces/IArticle';
 
 declare global {
   interface Error extends Error {
@@ -17,6 +20,8 @@ declare global {
   }
 
   namespace Models {
-    //export type ChallengeWinnersModel = Model<IChallengeWinners & Document>;
+    export type UserModel = Model<IUser & Document>;
+    export type CommentModel = Model<IComment & Document>;
+    export type ArticleModel = Model<IArticle & Document>;
   }
 }

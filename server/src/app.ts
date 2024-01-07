@@ -6,10 +6,10 @@ async function startServer() {
   await require('./dependecies').default({ expressApp: app });
 
   app
-    .listen(5000, () => {
+    .listen(process.env.PORT, () => {
       console.log(`
       ################################################
-              Server listening on port: ${5000}
+              Server listening on port: ${process.env.PORT} 
       ################################################
     `);
     })

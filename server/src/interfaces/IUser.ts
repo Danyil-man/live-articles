@@ -16,11 +16,6 @@ export enum Gender {
   FEMALE = 'FEMALE',
 }
 
-export enum Status {
-  PENDING = 'PENDING',
-  ACTIVE = 'ACTIVE',
-}
-
 export interface IUser {
   _id: string | Types.ObjectId;
   name: string;
@@ -32,15 +27,15 @@ export interface IUser {
   age?: number;
   favouriteArticles: PopulatedDoc<IArticle, Types.ObjectId>[];
   myArticles: PopulatedDoc<IArticle, Types.ObjectId>[];
-  status: Status;
   createdAt?: Date;
+  getSignedJwtToken?(): string;
+  matchPassword?(enteredPassword: string): boolean;
 }
 
 export interface IUserInputDTO {
   name: string;
   email: string;
   password?: string;
-  status?: Status;
 }
 
 export interface IUserInputUpdate {
