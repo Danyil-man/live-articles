@@ -1,10 +1,16 @@
 import { Types, PopulatedDoc } from 'mongoose';
 import { IUser } from './IUser';
 import { IComment } from './IComments';
+import { MulterFile } from './IMulter';
 
 export interface IArticle {
   _id: string | Types.ObjectId;
-  image: string;
+  image: {
+    public_id: string;
+    created_at: string;
+    url: string;
+    secure_url: string;
+  };
   title: string;
   description: string;
   likes?: PopulatedDoc<IUser, Types.ObjectId>[];
@@ -16,7 +22,7 @@ export interface IArticle {
 }
 
 export interface IArticleInput {
-  image: string;
+  file: MulterFile;
   title: string;
   description: string;
 }

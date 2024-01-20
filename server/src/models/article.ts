@@ -4,8 +4,10 @@ import mongoose from 'mongoose';
 const Article = new mongoose.Schema(
   {
     image: {
-      type: String,
-      required: [true, 'Please add image'],
+      public_id: String,
+      created_at: String,
+      url: String,
+      secure_url: String,
     },
 
     title: String,
