@@ -3,6 +3,7 @@ import { JwtPayload } from 'jsonwebtoken';
 import { IUser } from '../../interfaces/IUser';
 import { IComment } from '../../interfaces/IComments';
 import { IArticle } from '../../interfaces/IArticle';
+import { ICategory } from '../../interfaces/ICategory';
 
 declare global {
   interface Error extends Error {
@@ -23,5 +24,6 @@ declare global {
     export type UserModel = Model<IUser & Document>;
     export type CommentModel = Model<IComment & Document>;
     export type ArticleModel = Model<IArticle & Document>;
+    export type CategoryModel = Model<ICategory & Document>;
   }
 }

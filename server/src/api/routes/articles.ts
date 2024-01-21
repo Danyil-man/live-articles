@@ -30,13 +30,47 @@ export default (app: Router): void => {
     ) => {
       try {
         const articleServiceInstance = Container.get(ArticleService);
-
         const article = await articleServiceInstance.Create(
           req,
           req.body as IArticleInput,
           req.currentUser,
         );
         return res.status(200).json({ success: true, data: article });
+      } catch (e) {
+        return next(e);
+      }
+    },
+  );
+
+  route.get(
+    '/:id',
+    middlewares.isAuth,
+    middlewares.attachCurrentUser,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const articleServiceInstance = Container.get(ArticleService);
+        const article = await articleServiceInstance.GetArticleById(
+          req.params.id as string,
+        );
+        return res.status(200).json({ success: true, data: article });
+      } catch (e) {
+        return next(e);
+      }
+    },
+  );
+
+  route.get(
+    '/',
+    middlewares.isAuth,
+    middlewares.attachCurrentUser,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const articleServiceInstance = Container.get(ArticleService);
+        const articles = await articleServiceInstance.GetAllPosts(
+          req.query as any,
+          req.currentUser,
+        );
+        return res.status(200).json({ success: true, data: articles });
       } catch (e) {
         return next(e);
       }
@@ -166,25 +200,6 @@ export default (app: Router): void => {
   //   );
 
   //   route.get(
-  //     '/',
-  //     middlewares.isAuth,
-  //     middlewares.attachCurrentUser,
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //       try {
-  //         const postServiceInstance = Container.get(PostService);
-  //         const posts = await postServiceInstance.GetAll(
-  //           req.query as any,
-  //           req.currentUser,
-  //           1,
-  //         );
-  //         return res.status(200).json({ success: true, data: posts });
-  //       } catch (e) {
-  //         return next(e);
-  //       }
-  //     },
-  //   );
-
-  //   route.get(
   //     '/popular',
   //     middlewares.isAuth,
   //     middlewares.attachCurrentUser,
@@ -229,25 +244,6 @@ export default (app: Router): void => {
   //           req.currentUser as IUser,
   //         );
   //         return res.status(200).json({ success: true, data: posts });
-  //       } catch (e) {
-  //         return next(e);
-  //       }
-  //     },
-  //   );
-
-  //   route.get(
-  //     '/:id',
-  //     middlewares.isAuth,
-  //     middlewares.attachCurrentUser,
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //       try {
-  //         const postServiceInstance = Container.get(PostService);
-  //         const post = await postServiceInstance.GetById(
-  //           req.params.id as string,
-  //           req.currentUser,
-  //           1,
-  //         );
-  //         return res.status(200).json({ success: true, data: post });
   //       } catch (e) {
   //         return next(e);
   //       }

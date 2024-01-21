@@ -27,7 +27,7 @@ export interface IArticleInput {
   description: string;
 }
 
-export interface IPostData {
+export interface IArticleData {
   total: number;
   result: IArticle[];
 }

@@ -26,8 +26,13 @@ export default async ({
     model: require('../models/comment').default,
   };
 
+  const categoryModel = {
+    name: 'categoryModel',
+    model: require('../models/category').default,
+  };
+
   dependencyInjectorLoader({
-    models: [userModel, articleModel, commentModel],
+    models: [userModel, articleModel, commentModel, categoryModel],
   });
   express({ app: expressApp });
   console.log('Express loaded');

@@ -1,6 +1,6 @@
 import { Service, Inject, Container } from 'typedi';
 import { Document, ObjectId, PopulatedDoc, Types } from 'mongoose';
-import { IArticle, IArticleInput } from '../interfaces/IArticle';
+import { IArticle, IArticleData, IArticleInput } from '../interfaces/IArticle';
 import {
   IComment,
   ICommentData,
@@ -74,25 +74,98 @@ export default class PostService {
     };
   }
 
-  // public async CreateBotPostsAndCommentsJob(botLimit: number): Promise<any> {
-  //   const randomBots = await this.userModel.aggregate([
-  //     { $match: { isUserBot: true } },
-  //     { $sample: { size: botLimit } },
-  //   ]);
-  //   let time: number;
+  public async GetArticleById(articleId: string): Promise<IArticle> {
+    const article = await this.articleModel
+      .findById(articleId)
+      .populate('author', {
+        name: 1,
+        email: 1,
+        role: 1,
+      })
+      .populate({
+        path: 'comments',
+        options: {
+          sort: { createdAt: -1 },
+        },
+        populate: [
+          {
+            path: 'author',
+            select: 'name email role avatar',
+          },
+          {
+            path: 'replies',
+            options: {
+              sort: { createdAt: -1 },
+            },
+            populate: [
+              {
+                path: 'author',
+                select: 'name email role avatar',
+              },
+            ],
+          },
+        ],
+      })
+      .lean();
 
-  //   for (const bot of randomBots) {
-  //     time = Math.floor(Math.random() * (1430 - 1 + 1)) + 1;
+    return article;
+  }
 
-  //     await this.agendaInstance.schedule(
-  //       `in ${time} minutes`,
-  //       'createBotPostsAndComments',
-  //       {
-  //         bot: bot,
-  //       },
-  //     );
-  //   }
-  // }
+  public async GetAllPosts(
+    params: IPagination,
+    user: IUser,
+  ): Promise<IArticle[]> {
+    const limit = params.limit ? +params.limit : 0;
+    const offset = params.offset ? +params.offset : 0;
+
+    console.log('params', params);
+    // const query = {
+    //   $or: [{ _id: { $in: activePosts[0]?.posts } }, { rank: { $gte: 100 } }],
+    // };
+
+    const data: IArticleData = {
+      total: 0,
+      result: [],
+    };
+    const articles = await this.articleModel
+      .find({})
+      .populate('author', {
+        name: 1,
+        email: 1,
+        role: 1,
+      })
+      .populate({
+        path: 'comments',
+        options: {
+          sort: { createdAt: -1 },
+        },
+        populate: [
+          {
+            path: 'author',
+            select: 'name email role avatar',
+          },
+          {
+            path: 'replies',
+            options: {
+              sort: { createdAt: -1 },
+            },
+            populate: [
+              {
+                path: 'author',
+                select: 'name email role avatar',
+              },
+            ],
+          },
+        ],
+      })
+      .sort(+params.sort === 1 ? { createdAt: 1 } : { createdAt: -1 })
+      .skip(offset)
+      .limit(limit)
+      .lean();
+    data.result = articles;
+    data.total = await this.articleModel.countDocuments({});
+    return data;
+  }
 
   // public async CreateComment(
   //   commentText: string,
@@ -1402,101 +1475,6 @@ export default class PostService {
   //   data.total = await this.postModel.countDocuments(query);
   //   data.nextPostsAvailable = data.total - limit > 0 ? true : false;
   //   return data;
-  // }
-
-  // public async GetByIdV3(
-  //   postId: string,
-  //   user: IUser,
-  //   version = 2,
-  // ): Promise<IPost> {
-  //   let post = await this.postModel
-  //     .findById(postId, {
-  //       author: 1,
-  //       authorComment: 1,
-  //       createdAt: 1,
-  //       updatedAt: 1,
-  //       image: 1,
-  //       thumbImage: 1,
-  //       shadowHide: 1,
-  //       likes: 1,
-  //       dislikes: 1,
-  //       comments: 1,
-  //       generation: 1,
-  //       isFeatured: 1,
-  //     })
-  //     .populate('author', {
-  //       username: 1,
-  //       email: 1,
-  //       role: 1,
-  //       status: 1,
-  //       isUserBot: 1,
-  //       createdAt: 1,
-  //       updatedAt: 1,
-  //       gender: 1,
-  //       name: 1,
-  //       avatar: 1,
-  //       followers: 1,
-  //       following: 1,
-  //       myPosts: 1,
-  //       favouritePosts: 1,
-  //       blockedUsers: 1,
-  //     })
-  //     .populate({
-  //       path: 'comments',
-  //       options: {
-  //         sort: { createdAt: version === 2 ? 1 : -1 },
-  //       },
-  //       populate: [
-  //         {
-  //           path: 'author',
-  //           select:
-  //             'username name email role status gender avatar isUserBot createdAt updatedAt',
-  //         },
-  //         {
-  //           path: 'replies',
-  //           options: {
-  //             sort: { createdAt: version === 2 ? 1 : -1 },
-  //           },
-  //           populate: [
-  //             {
-  //               path: 'author',
-  //               select:
-  //                 'username name email role status gender avatar isUserBot createdAt updatedAt',
-  //             },
-  //           ],
-  //         },
-  //       ],
-  //     })
-  //     .populate({
-  //       path: 'authorComment',
-  //       populate: {
-  //         path: 'author',
-  //       },
-  //     })
-  //     .populate({
-  //       path: 'challenge',
-  //       populate: [
-  //         {
-  //           path: 'winners',
-  //           select: 'position challenge user post',
-  //         },
-  //       ],
-  //     })
-  //     .populate({
-  //       path: 'generation',
-  //       select: 'prompt type',
-  //       populate: [
-  //         {
-  //           path: 'style',
-  //           select: 'models',
-  //           populate: [{ path: 'models', select: '_id isPremium' }],
-  //         },
-  //       ],
-  //     })
-  //     .lean();
-  //   post = await this.extendPostV3(post, user);
-
-  //   return post;
   // }
 
   // public async GetAllComments(
