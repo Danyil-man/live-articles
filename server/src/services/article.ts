@@ -18,11 +18,13 @@ import moment from 'moment';
 import { Request, Response } from 'express';
 import { MulterFile } from '../interfaces/IMulter';
 import multer from 'multer';
+import { ICategory } from '../interfaces/ICategory';
 
 @Service()
 export default class PostService {
   constructor(
     @Inject('articleModel') private articleModel: Models.ArticleModel,
+    @Inject('categoryModel') private categoryModel: Models.CategoryModel,
     @Inject('commentModel') private commentModel: Models.CommentModel,
     @Inject('userModel') private userModel: Models.UserModel,
   ) {}
@@ -33,11 +35,6 @@ export default class PostService {
     user: IUser,
   ): Promise<IArticle> {
     let uploadedImage;
-    try {
-      uploadedImage = await this.uploadFile(req.file.path);
-    } catch (e) {
-      throw new ErrorResponse('The error occurred with uploading image');
-    }
 
     if (!articleInput.title) {
       throw new ErrorResponse('The article does not contain a title');
@@ -45,6 +42,30 @@ export default class PostService {
 
     if (!articleInput.description) {
       throw new ErrorResponse('Describe you article');
+    }
+
+    if (!articleInput.category) {
+      throw new ErrorResponse('You must specify a category for your article');
+    }
+
+    let category: ICategory;
+
+    try {
+      category = await this.categoryModel.findById(articleInput.category);
+    } catch (e) {
+      throw new ErrorResponse(
+        'An error occurred when the server tried to find the category',
+      );
+    }
+
+    if (!category) {
+      throw new ErrorResponse('The category not found');
+    }
+
+    try {
+      uploadedImage = await this.uploadFile(req.file.path);
+    } catch (e) {
+      throw new ErrorResponse('An error occurred with uploading image');
     }
 
     const data = {
@@ -57,6 +78,7 @@ export default class PostService {
         secure_url: uploadedImage.secure_url,
       },
       author: user._id,
+      category: category._id,
     };
 
     let article: IArticle & Document;
@@ -81,6 +103,9 @@ export default class PostService {
         name: 1,
         email: 1,
         role: 1,
+      })
+      .populate('category', {
+        name: 1,
       })
       .populate({
         path: 'comments',
@@ -111,28 +136,37 @@ export default class PostService {
     return article;
   }
 
-  public async GetAllPosts(
+  public async GetAllArticles(
     params: IPagination,
     user: IUser,
-  ): Promise<IArticle[]> {
+  ): Promise<IArticleData> {
     const limit = params.limit ? +params.limit : 0;
     const offset = params.offset ? +params.offset : 0;
 
-    console.log('params', params);
-    // const query = {
-    //   $or: [{ _id: { $in: activePosts[0]?.posts } }, { rank: { $gte: 100 } }],
-    // };
+    const query: any = {};
+
+    if (params.category) {
+      query.category = params.category;
+    }
+
+    if (params.text) {
+      query.title = { $regex: params.text, $options: 'i' };
+    }
 
     const data: IArticleData = {
       total: 0,
       result: [],
     };
+
     const articles = await this.articleModel
-      .find({})
+      .find(query)
       .populate('author', {
         name: 1,
         email: 1,
         role: 1,
+      })
+      .populate('category', {
+        name: 1,
       })
       .populate({
         path: 'comments',
@@ -158,13 +192,29 @@ export default class PostService {
           },
         ],
       })
-      .sort(+params.sort === 1 ? { createdAt: 1 } : { createdAt: -1 })
+      .sort(+params.sort === 1 ? { createdAt: -1 } : { createdAt: 1 })
       .skip(offset)
       .limit(limit)
       .lean();
     data.result = articles;
-    data.total = await this.articleModel.countDocuments({});
+    data.total = await this.articleModel.countDocuments(query);
     return data;
+  }
+
+  public async RemoveArticle(articleId: string, user: IUser): Promise<void> {
+    const article = await this.articleModel.findById(articleId);
+    if (!article) {
+      throw new ErrorResponse('Article not found');
+    }
+
+    if (article.author.toString() !== user._id.toString()) {
+      throw new ErrorResponse('You are not author of this article');
+    }
+
+    const imageId = article.image.public_id;
+
+    await this.deleteFile(imageId);
+    await this.articleModel.findByIdAndDelete(articleId);
   }
 
   // public async CreateComment(
@@ -1603,36 +1653,6 @@ export default class PostService {
   //   return data;
   // }
 
-  // public async Remove(postId: string, user: IUser): Promise<void> {
-  //   const post = await this.postModel.findById(postId);
-  //   if (!post) {
-  //     throw new ErrorResponse(
-  //       i18next.t('post_not_found', { lng: user?.language }),
-  //       404,
-  //     );
-  //   }
-  //   if (post.author.toString() !== user._id.toString()) {
-  //     throw new ErrorResponse(
-  //       i18next.t('not_post_author', { lng: user?.language }),
-  //       400,
-  //     );
-  //   }
-
-  //   if (post.challenge) {
-  //     const challengePosts = await this.postModel.find({
-  //       challenge: post.challenge,
-  //     });
-  //     if (challengePosts.length <= 1) {
-  //       await this.userModel.findOneAndUpdate(
-  //         { _id: user._id },
-  //         { $pull: { challenges: post.challenge } },
-  //       );
-  //     }
-  //   }
-
-  //   await this.postModel.findOneAndDelete({ _id: postId });
-  // }
-
   // public async CommentRemove(commentId: string, user: IUser): Promise<void> {
   //   const comment = await this.commentModel.findById(commentId);
   //   if (!comment) {
@@ -2059,6 +2079,14 @@ export default class PostService {
       return result;
     } catch (e) {
       throw new ErrorResponse('The error occurred with uploading photo');
+    }
+  }
+
+  public async deleteFile(imageId: string) {
+    try {
+      await cloudinary.uploader.destroy(imageId);
+    } catch (e) {
+      throw new ErrorResponse('The error occurred with deleting photo');
     }
   }
 }

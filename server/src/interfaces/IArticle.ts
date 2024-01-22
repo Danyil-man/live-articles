@@ -2,6 +2,7 @@ import { Types, PopulatedDoc } from 'mongoose';
 import { IUser } from './IUser';
 import { IComment } from './IComments';
 import { MulterFile } from './IMulter';
+import { ICategory } from './ICategory';
 
 export interface IArticle {
   _id: string | Types.ObjectId;
@@ -15,6 +16,7 @@ export interface IArticle {
   description: string;
   likes?: PopulatedDoc<IUser, Types.ObjectId>[];
   author: PopulatedDoc<IUser, Types.ObjectId>;
+  category: PopulatedDoc<ICategory, Types.ObjectId>;
   comments?: PopulatedDoc<IComment, Types.ObjectId>[];
   isLiked?: boolean;
   isAuthor?: boolean;
@@ -25,6 +27,7 @@ export interface IArticleInput {
   file: MulterFile;
   title: string;
   description: string;
+  category: string;
 }
 
 export interface IArticleData {

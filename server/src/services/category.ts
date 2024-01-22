@@ -12,7 +12,6 @@ export default class CategoryService {
 
   public async Create(body: ICategoryInput): Promise<ICategory> {
     const categoryName = body.name.trim();
-    console.log('categoryName', categoryName);
     if (!categoryName) {
       throw new ErrorResponse('Category name does not provided');
     }

@@ -3,5 +3,6 @@ export interface IPagination {
   offset: string;
   sort?: number;
   category?: string;
+  text?: string;
   search?: string;
 }

@@ -66,11 +66,29 @@ export default (app: Router): void => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const articleServiceInstance = Container.get(ArticleService);
-        const articles = await articleServiceInstance.GetAllPosts(
+        const articles = await articleServiceInstance.GetAllArticles(
           req.query as any,
           req.currentUser,
         );
         return res.status(200).json({ success: true, data: articles });
+      } catch (e) {
+        return next(e);
+      }
+    },
+  );
+
+  route.post(
+    '/:id/remove',
+    middlewares.isAuth,
+    middlewares.attachCurrentUser,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const articleServiceInstance = Container.get(ArticleService);
+        await articleServiceInstance.RemoveArticle(
+          req.params.id as string,
+          req.currentUser,
+        );
+        return res.status(200).json({ success: true });
       } catch (e) {
         return next(e);
       }
@@ -244,25 +262,6 @@ export default (app: Router): void => {
   //           req.currentUser as IUser,
   //         );
   //         return res.status(200).json({ success: true, data: posts });
-  //       } catch (e) {
-  //         return next(e);
-  //       }
-  //     },
-  //   );
-
-  //   route.post(
-  //     '/:id/remove',
-  //     middlewares.isAuth,
-  //     middlewares.attachCurrentUser,
-  //     middlewares.isNotDemoUser,
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //       try {
-  //         const postServiceInstance = Container.get(PostService);
-  //         await postServiceInstance.Remove(
-  //           req.params.id as string,
-  //           req.currentUser,
-  //         );
-  //         return res.status(200).json({ success: true });
   //       } catch (e) {
   //         return next(e);
   //       }

@@ -19,6 +19,11 @@ const Article = new mongoose.Schema(
       ref: 'User',
     },
 
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+    },
+
     likes: [
       {
         type: mongoose.Schema.Types.ObjectId,
