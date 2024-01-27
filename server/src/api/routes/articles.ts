@@ -43,6 +43,41 @@ export default (app: Router): void => {
   );
 
   route.get(
+    '/',
+    middlewares.isAuth,
+    middlewares.attachCurrentUser,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const articleServiceInstance = Container.get(ArticleService);
+        const articles = await articleServiceInstance.GetAllArticles(
+          req.query as any,
+        );
+        return res.status(200).json({ success: true, data: articles });
+      } catch (e) {
+        return next(e);
+      }
+    },
+  );
+
+  route.get(
+    '/user-articles',
+    middlewares.isAuth,
+    middlewares.attachCurrentUser,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const articleServiceInstance = Container.get(ArticleService);
+        const articles = await articleServiceInstance.GetUserArticles(
+          req.query as any,
+          req.currentUser,
+        );
+        return res.status(200).json({ success: true, data: articles });
+      } catch (e) {
+        return next(e);
+      }
+    },
+  );
+
+  route.get(
     '/:id',
     middlewares.isAuth,
     middlewares.attachCurrentUser,
@@ -53,24 +88,6 @@ export default (app: Router): void => {
           req.params.id as string,
         );
         return res.status(200).json({ success: true, data: article });
-      } catch (e) {
-        return next(e);
-      }
-    },
-  );
-
-  route.get(
-    '/',
-    middlewares.isAuth,
-    middlewares.attachCurrentUser,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const articleServiceInstance = Container.get(ArticleService);
-        const articles = await articleServiceInstance.GetAllArticles(
-          req.query as any,
-          req.currentUser,
-        );
-        return res.status(200).json({ success: true, data: articles });
       } catch (e) {
         return next(e);
       }

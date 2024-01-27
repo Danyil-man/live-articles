@@ -34,3 +34,9 @@ export interface IArticleData {
   total: number;
   result: IArticle[];
 }
+
+export interface IArticleParams {
+  myArticles?: string;
+  favouriteArticles?: string;
+  user_id?: string;
+}

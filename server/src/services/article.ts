@@ -1,6 +1,11 @@
 import { Service, Inject, Container } from 'typedi';
 import { Document, ObjectId, PopulatedDoc, Types } from 'mongoose';
-import { IArticle, IArticleData, IArticleInput } from '../interfaces/IArticle';
+import {
+  IArticle,
+  IArticleData,
+  IArticleInput,
+  IArticleParams,
+} from '../interfaces/IArticle';
 import {
   IComment,
   ICommentData,
@@ -136,10 +141,7 @@ export default class PostService {
     return article;
   }
 
-  public async GetAllArticles(
-    params: IPagination,
-    user: IUser,
-  ): Promise<IArticleData> {
+  public async GetAllArticles(params: IPagination): Promise<IArticleData> {
     const limit = params.limit ? +params.limit : 0;
     const offset = params.offset ? +params.offset : 0;
 
@@ -215,6 +217,73 @@ export default class PostService {
 
     await this.deleteFile(imageId);
     await this.articleModel.findByIdAndDelete(articleId);
+  }
+
+  public async GetUserArticles(
+    params: IPagination & IArticleParams,
+    user: IUser,
+  ): Promise<IArticleData> {
+    const limit = params.limit ? +params.limit : 0;
+    const offset = params.offset ? +params.offset : 0;
+
+    const query: any = {};
+
+    if (+params.favouriteArticles) {
+      query._id = { $in: user.favouriteArticles };
+    }
+    if (+params.myArticles) {
+      query.author = new Types.ObjectId(user._id);
+    }
+    if (params.user_id) {
+      query.author = new Types.ObjectId(params.user_id);
+    }
+
+    const data: IArticleData = {
+      total: 0,
+      result: [],
+    };
+
+    const articles = await this.articleModel
+      .find(query)
+      .populate('author', {
+        name: 1,
+        email: 1,
+        role: 1,
+      })
+      .populate('category', {
+        name: 1,
+      })
+      .populate({
+        path: 'comments',
+        options: {
+          sort: { createdAt: -1 },
+        },
+        populate: [
+          {
+            path: 'author',
+            select: 'name email role avatar',
+          },
+          {
+            path: 'replies',
+            options: {
+              sort: { createdAt: -1 },
+            },
+            populate: [
+              {
+                path: 'author',
+                select: 'name email role avatar',
+              },
+            ],
+          },
+        ],
+      })
+      .skip(offset)
+      .limit(limit)
+      .lean();
+
+    data.total = await this.articleModel.countDocuments(query);
+    data.result = articles;
+    return data;
   }
 
   // public async CreateComment(
@@ -1387,143 +1456,6 @@ export default class PostService {
   //     }),
   //   );
   //   data.total = await this.postModel.countDocuments(query);
-  //   return data;
-  // }
-
-  // public async GetUserPosts(
-  //   params: IPaginationParams & IPostParams,
-  //   user: IUser,
-  // ): Promise<IPostData> {
-  //   let limit = params.limit ? +params.limit : 0;
-  //   const offset = params.offset ? +params.offset : 0;
-  //   const shadowHiddenPost = await this.hiddenPostIds(user);
-  //   const query: any = {};
-
-  //   if (params.user_id && params.post_id && params.forward) {
-  //     query.author = new Types.ObjectId(params.user_id);
-  //     if (+params.forward) {
-  //       query._id = { $gte: new Types.ObjectId(params.post_id) };
-  //     } else {
-  //       query._id = { $lte: new Types.ObjectId(params.post_id) };
-  //     }
-  //     ++limit;
-  //   } else if (+params.my && params.post_id && params.forward) {
-  //     query.author = new Types.ObjectId(user._id);
-  //     if (+params.forward) {
-  //       query._id = { $gte: new Types.ObjectId(params.post_id) };
-  //     } else {
-  //       query._id = { $lte: new Types.ObjectId(params.post_id) };
-  //     }
-  //     ++limit;
-  //   } else if (+params.saved && params.post_id && params.forward) {
-  //     if (+params.forward) {
-  //       query.$and = [
-  //         { _id: { $in: user.favouritePosts } },
-  //         { _id: { $gte: new Types.ObjectId(params.post_id) } },
-  //       ];
-  //     } else {
-  //       query.$and = [
-  //         { _id: { $in: user.favouritePosts } },
-  //         { _id: { $lte: new Types.ObjectId(params.post_id) } },
-  //       ];
-  //     }
-  //     ++limit;
-  //   } else {
-  //     if (shadowHiddenPost.length) {
-  //       query._id = { $nin: shadowHiddenPost };
-  //     }
-  //     if (+params.saved) {
-  //       query._id = { $in: user.favouritePosts };
-  //     }
-  //     if (+params.my) {
-  //       query.author = user._id;
-  //     }
-  //     if (params.user_id) {
-  //       query.author = new Types.ObjectId(params.user_id);
-  //     }
-  //   }
-
-  //   const data: IPostData = {
-  //     total: 0,
-  //     result: [],
-  //     nextPostsAvailable: false,
-  //   };
-
-  //   const posts = await this.postModel
-  //     .find(query, {
-  //       author: 1,
-  //       authorComment: 1,
-  //       createdAt: 1,
-  //       updatedAt: 1,
-  //       image: 1,
-  //       thumbImage: 1,
-  //       shadowHide: 1,
-  //       likes: 1,
-  //       dislikes: 1,
-  //       comments: 1,
-  //       generation: 1,
-  //       isFeatured: 1,
-  //     })
-  //     .populate({
-  //       path: 'comments',
-  //       options: {
-  //         sort: { createdAt: 1 },
-  //       },
-  //       populate: [
-  //         {
-  //           path: 'author',
-  //           select:
-  //             'username name email role status gender avatar isUserBot createdAt updatedAt',
-  //         },
-  //         {
-  //           path: 'replies',
-  //           select: 'text isAuthor author createdAt parent likes post mentions',
-  //           options: {
-  //             sort: { createdAt: 1 },
-  //           },
-  //           populate: [
-  //             {
-  //               path: 'author',
-  //               select:
-  //                 'username name email role status gender avatar isUserBot createdAt updatedAt',
-  //             },
-  //           ],
-  //         },
-  //       ],
-  //     })
-  //     .populate({
-  //       path: 'authorComment',
-  //     })
-  //     .populate({
-  //       path: 'generation',
-  //       select: 'prompt type',
-  //       populate: [
-  //         {
-  //           path: 'style',
-  //           select: 'models',
-  //           populate: [{ path: 'models', select: '_id isPremium' }],
-  //         },
-  //       ],
-  //     })
-  //     .sort(+params.forward === 1 ? { _id: 1 } : '-createdAt')
-  //     .skip(offset)
-  //     .limit(limit)
-  //     .lean();
-
-  //   const isDoublePagination = params?.post_id ? true : false;
-  //   data.result = await Promise.all(
-  //     posts.map(async (post) => {
-  //       const extendedPost = await this.extendPostV3(
-  //         post,
-  //         user,
-  //         isDoublePagination,
-  //       );
-  //       return extendedPost;
-  //     }),
-  //   );
-
-  //   data.total = await this.postModel.countDocuments(query);
-  //   data.nextPostsAvailable = data.total - limit > 0 ? true : false;
   //   return data;
   // }
 
