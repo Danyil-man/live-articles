@@ -326,6 +326,46 @@ export default class PostService {
     }
   }
 
+  public async LikeArticle(
+    currentArticleId: string,
+    user: IUser,
+    toLike: boolean,
+  ): Promise<any> {
+    let article = await this.articleModel.findById(currentArticleId).lean();
+
+    if (!article) {
+      throw new ErrorResponse('Article not found', 404);
+    }
+
+    console.log(currentArticleId, toLike);
+    const isLiked = article.likes.some(
+      (userId) => userId.toString() === user._id.toString(),
+    );
+
+    if (toLike && !isLiked) {
+      article = await this.articleModel
+        .findByIdAndUpdate(
+          currentArticleId,
+          {
+            $addToSet: { likes: user._id },
+          },
+          { new: true },
+        )
+        .lean();
+    }
+    if (isLiked && !toLike) {
+      article = await this.articleModel
+        .findByIdAndUpdate(
+          currentArticleId,
+          {
+            $pull: { likes: user._id },
+          },
+          { new: true },
+        )
+        .lean();
+    }
+  }
+
   // public async CreateComment(
   //   commentText: string,
   //   post: IPost,
@@ -844,257 +884,6 @@ export default class PostService {
   //   }
   //   data.total = comment.likes ? comment.likes.length : 0;
   //   return data;
-  // }
-
-  // public async Like(currentPostId: string, user: IUser): Promise<IPost> {
-  //   let post = await this.postModel
-  //     .findById(currentPostId)
-  //     .select('likes author');
-  //   if (!post) {
-  //     throw new ErrorResponse(
-  //       i18next.t('post_not_found', { lng: user?.language }),
-  //       404,
-  //     );
-  //   }
-  //   const isLiked = post.likes.some(
-  //     (userId) => userId.toString() === user._id.toString(),
-  //   );
-  //   const userServiceInstance = Container.get(UserService);
-  //   const notActiveIds = await userServiceInstance.GetNotActiveIds(user);
-  //   const authorId = post.author.toString();
-  //   const isAuthor = authorId === user._id.toString();
-  //   if (isLiked) {
-  //     post = await this.postModel
-  //       .findByIdAndUpdate(
-  //         currentPostId,
-  //         {
-  //           $pull: { likes: user._id },
-  //         },
-  //         { new: true },
-  //       )
-  //       .populate('author')
-  //       .populate({
-  //         path: 'comments',
-  //         select: 'text isAuthor author createdAt',
-  //         match: { author: { $nin: notActiveIds } },
-  //         options: {
-  //           sort: { createdAt: 1 },
-  //         },
-  //         populate: {
-  //           path: 'author',
-  //         },
-  //       })
-  //       .populate({
-  //         path: 'authorComment',
-  //         select: 'text isAuthor createdAt',
-  //         populate: {
-  //           path: 'author',
-  //         },
-  //       })
-  //       .lean();
-  //     this.updateRank(-config.weight.like, post._id.toString());
-  //   } else {
-  //     post = await this.postModel
-  //       .findByIdAndUpdate(
-  //         currentPostId,
-  //         {
-  //           $push: { likes: user._id },
-  //           $pull: { dislikes: user._id },
-  //         },
-  //         { new: true },
-  //       )
-  //       .populate('author')
-  //       .populate({
-  //         path: 'comments',
-  //         select: 'text isAuthor author createdAt',
-  //         match: { author: { $nin: notActiveIds } },
-  //         options: {
-  //           sort: { createdAt: 1 },
-  //         },
-  //         populate: {
-  //           path: 'author',
-  //         },
-  //       })
-  //       .populate({
-  //         path: 'authorComment',
-  //         select: 'text isAuthor createdAt',
-  //         populate: {
-  //           path: 'author',
-  //         },
-  //       })
-  //       .lean();
-  //     this.updateRank(config.weight.like, post._id.toString());
-  //     if (!isAuthor) {
-  //       const userAuthor = await this.userModel
-  //         .findOne({
-  //           _id: authorId,
-  //         })
-  //         .select('language');
-  //       const notificationServiceInstance = Container.get(NotificationService);
-  //       notificationServiceInstance.SendPush({
-  //         user: authorId,
-  //         content: i18next.t('post_liked', {
-  //           username: user.username,
-  //           lng: userAuthor?.language,
-  //         }),
-  //         type: NotificationType.likesNotifications,
-  //         sender: user._id.toString(),
-  //         post: post._id.toString(),
-  //         data: {
-  //           postId: post._id.toString(),
-  //         },
-  //       });
-  //     }
-  //   }
-  //   const isDisliked = post.dislikes.some(
-  //     (userId) => userId.toString() === user._id.toString(),
-  //   );
-  //   const isSaved = user.favouritePosts.some(
-  //     (postId) => postId.toString() === post._id.toString(),
-  //   );
-  //   const author = post.author as IUser;
-  //   ((post.authorComment as IComment).author as IUser).isFollowed = (
-  //     (post.authorComment as IComment).author as IUser
-  //   ).followers?.some(
-  //     (followerId) => user._id.toString() === followerId.toString(),
-  //   );
-  //   const comments = post.comments.slice(0, 2).map((comment) => {
-  //     const isFollowed = (
-  //       (comment as IComment).author as IUser
-  //     ).followers?.some(
-  //       (followerId) => user._id.toString() === followerId.toString(),
-  //     );
-  //     ((comment as IComment).author as IUser).isFollowed = isFollowed;
-  //     return comment;
-  //   });
-  //   author.isFollowed = (post.author as IUser).followers?.some(
-  //     (followerId) => user._id.toString() === followerId.toString(),
-  //   );
-  //   return {
-  //     ...post,
-  //     author,
-  //     comments,
-  //     isAuthor,
-  //     isLiked: !isLiked,
-  //     isDisliked,
-  //     isSaved,
-  //     totalComments: post.comments.length,
-  //   };
-  // }
-
-  // public async LikeV3(
-  //   currentPostId: string,
-  //   user: IUser,
-  //   isLiked: boolean,
-  // ): Promise<any> {
-  //   const challengesServiceInstance = Container.get(ChallengesService);
-  //   const notificationServiceInstance = Container.get(NotificationService);
-
-  //   let post = await this.postModel
-  //     .findById(currentPostId)
-  //     .select('likes author challenge');
-  //   if (!post) {
-  //     throw new ErrorResponse(
-  //       i18next.t('post_not_found', { lng: user?.language }),
-  //       404,
-  //     );
-  //   }
-
-  //   let firstPlaceUser;
-  //   if (post?.challenge) {
-  //     const challenge = await this.challengesModel.findOne({
-  //       _id: post.challenge,
-  //     });
-
-  //     if (challenge.status === ChallengeStatus.ACTIVE) {
-  //       const leaderboard =
-  //         await challengesServiceInstance.GetChallengeLeaderboard(
-  //           challenge._id,
-  //           user,
-  //         );
-  //       firstPlaceUser = leaderboard.find((user) => user.position === 1);
-  //     }
-  //   }
-  //   const isPostLiked = post.likes.some(
-  //     (userId) => userId.toString() === user._id.toString(),
-  //   );
-  //   const authorId = post.author.toString();
-  //   const isAuthor = authorId === user._id.toString();
-  //   if (isLiked && !isPostLiked) {
-  //     post = await this.postModel
-  //       .findByIdAndUpdate(
-  //         currentPostId,
-  //         {
-  //           $addToSet: { likes: user._id },
-  //           $pull: { dislikes: user._id },
-  //         },
-  //         { new: true },
-  //       )
-  //       .lean();
-  //     if (!isAuthor) {
-  //       const userAuthor = await this.userModel
-  //         .findOne({
-  //           _id: authorId,
-  //         })
-  //         .select('language');
-  //       notificationServiceInstance.SendPush({
-  //         user: authorId,
-  //         content: i18next.t('post_liked', {
-  //           username: user.username,
-  //           lng: userAuthor?.language,
-  //         }),
-  //         type: NotificationType.likesNotifications,
-  //         sender: user._id.toString(),
-  //         post: post._id.toString(),
-  //         data: {
-  //           postId: post._id.toString(),
-  //         },
-  //       });
-  //     }
-  //     this.updateRank(config.weight.like, post._id.toString());
-  //   }
-  //   if (isPostLiked && !isLiked) {
-  //     post = await this.postModel
-  //       .findByIdAndUpdate(
-  //         currentPostId,
-  //         {
-  //           $pull: { likes: user._id },
-  //         },
-  //         { new: true },
-  //       )
-  //       .lean();
-  //     this.updateRank(-config.weight.like, post._id.toString());
-  //   }
-
-  //   let anotherFirstPlaceUser;
-  //   if (post?.challenge) {
-  //     const challenge = await this.challengesModel.findOne({
-  //       _id: post.challenge,
-  //     });
-
-  //     if (challenge.status === ChallengeStatus.ACTIVE) {
-  //       const leaderboard =
-  //         await challengesServiceInstance.GetChallengeLeaderboard(
-  //           challenge._id,
-  //           user,
-  //         );
-  //       anotherFirstPlaceUser = leaderboard.find((user) => user.position === 1);
-
-  //       if (
-  //         firstPlaceUser.user._id.toString() !==
-  //         anotherFirstPlaceUser.user._id.toString()
-  //       ) {
-  //         notificationServiceInstance.SendPush({
-  //           user: firstPlaceUser.user._id.toString(),
-  //           content: `⚠️ Alert! You've been nudged to 2nd place. Reclaim your throne and aim for the top spot! 🚀`,
-  //           type: NotificationType.challengeNotifications,
-  //           data: {
-  //             challengeId: challenge._id.toString(),
-  //           },
-  //         });
-  //       }
-  //     }
-  //   }
   // }
 
   // public async CommentLikeV3(
