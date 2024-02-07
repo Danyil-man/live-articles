@@ -286,6 +286,46 @@ export default class PostService {
     return data;
   }
 
+  public async FavouriteArticle(
+    currentArticleId: string,
+    user: IUser,
+    toFavorite: boolean,
+  ): Promise<any> {
+    const article = await this.articleModel.findById(currentArticleId).lean();
+    if (!article) {
+      throw new ErrorResponse('Article not found', 404);
+    }
+
+    const isSaved = user.favouriteArticles.some(
+      (articleId) => articleId.toString() === article._id.toString(),
+    );
+
+    if (toFavorite && !isSaved) {
+      await this.userModel
+        .findByIdAndUpdate(
+          user._id,
+          {
+            $addToSet: {
+              favouriteArticles: new Types.ObjectId(currentArticleId),
+            },
+          },
+          { new: true },
+        )
+        .lean();
+    }
+    if (isSaved && !toFavorite) {
+      await this.userModel
+        .findByIdAndUpdate(
+          user._id,
+          {
+            $pull: { favouriteArticles: new Types.ObjectId(currentArticleId) },
+          },
+          { new: true },
+        )
+        .lean();
+    }
+  }
+
   // public async CreateComment(
   //   commentText: string,
   //   post: IPost,
@@ -728,161 +768,6 @@ export default class PostService {
   //   });
   //   comment = await comment.populate('author');
   //   return comment;
-  // }
-
-  // public async Favourite(currentPostId: string, user: IUser): Promise<IPost> {
-  //   const userServiceInstance = Container.get(UserService);
-  //   const notActiveIds = await userServiceInstance.GetNotActiveIds(user);
-  //   const post = await this.postModel
-  //     .findById(currentPostId)
-  //     .populate('author')
-  //     .populate({
-  //       path: 'comments',
-  //       select: 'text isAuthor author createdAt',
-  //       match: { author: { $nin: notActiveIds } },
-  //       options: {
-  //         sort: { createdAt: 1 },
-  //       },
-  //       populate: {
-  //         path: 'author',
-  //       },
-  //     })
-  //     .populate({
-  //       path: 'authorComment',
-  //       select: 'text isAuthor createdAt',
-  //       populate: {
-  //         path: 'author',
-  //       },
-  //     })
-  //     .lean();
-  //   if (!post) {
-  //     throw new ErrorResponse(
-  //       i18next.t('post_not_found', { lng: user?.language }),
-  //       404,
-  //     );
-  //   }
-  //   const isSaved = user.favouritePosts.some(
-  //     (postId) => postId.toString() === post._id.toString(),
-  //   );
-  //   const authorId = post.author._id.toString();
-  //   const isAuthor = authorId === user._id.toString();
-  //   if (isSaved) {
-  //     await this.userModel
-  //       .findByIdAndUpdate(
-  //         user._id,
-  //         { $pull: { favouritePosts: new Types.ObjectId(currentPostId) } },
-  //         { new: true },
-  //       )
-  //       .lean();
-  //     this.updateRank(-config.weight.save, post._id.toString());
-  //   } else {
-  //     await this.userModel
-  //       .findByIdAndUpdate(
-  //         user._id,
-  //         { $push: { favouritePosts: new Types.ObjectId(currentPostId) } },
-  //         { new: true },
-  //       )
-  //       .lean();
-  //     this.updateRank(config.weight.save, post._id.toString());
-  //     if (!isAuthor) {
-  //       const userAuthor = await this.userModel
-  //         .findOne({
-  //           _id: authorId,
-  //         })
-  //         .select('language');
-  //       const notificationServiceInstance = Container.get(NotificationService);
-  //       notificationServiceInstance.SendPush({
-  //         user: authorId,
-  //         content: i18next.t('post_saved', {
-  //           username: user.username,
-  //           lng: userAuthor?.language,
-  //         }),
-  //         type: NotificationType.savesNotifications,
-  //         sender: user._id.toString(),
-  //         post: post._id.toString(),
-  //         data: {
-  //           postId: post._id.toString(),
-  //         },
-  //       });
-  //     }
-  //   }
-  //   const isLiked = post.likes.some(
-  //     (userId) => userId.toString() === user._id.toString(),
-  //   );
-  //   const isDisliked = post.dislikes.some(
-  //     (userId) => userId.toString() === user._id.toString(),
-  //   );
-  //   return {
-  //     ...post,
-  //     isAuthor,
-  //     isSaved: !isSaved,
-  //     isLiked,
-  //     isDisliked,
-  //     totalComments: post.comments ? post.comments.length : 0,
-  //   };
-  // }
-
-  // public async FavouriteV3(
-  //   currentPostId: string,
-  //   user: IUser,
-  //   isFavourited: boolean,
-  // ): Promise<any> {
-  //   const post = await this.postModel.findById(currentPostId).lean();
-  //   if (!post) {
-  //     throw new ErrorResponse(
-  //       i18next.t('post_not_found', { lng: user?.language }),
-  //       404,
-  //     );
-  //   }
-
-  //   const isSaved = user.favouritePosts.some(
-  //     (postId) => postId.toString() === post._id.toString(),
-  //   );
-
-  //   const authorId = post.author.toString();
-  //   const isAuthor = authorId === user._id.toString();
-
-  //   if (isFavourited && !isSaved) {
-  //     await this.userModel
-  //       .findByIdAndUpdate(
-  //         user._id,
-  //         { $addToSet: { favouritePosts: new Types.ObjectId(currentPostId) } },
-  //         { new: true },
-  //       )
-  //       .lean();
-  //     if (!isAuthor) {
-  //       const userAuthor = await this.userModel
-  //         .findOne({
-  //           _id: authorId,
-  //         })
-  //         .select('language');
-  //       const notificationServiceInstance = Container.get(NotificationService);
-  //       notificationServiceInstance.SendPush({
-  //         user: authorId,
-  //         content: i18next.t('post_saved', {
-  //           username: user.username,
-  //           lng: userAuthor?.language,
-  //         }),
-  //         type: NotificationType.savesNotifications,
-  //         sender: user._id.toString(),
-  //         post: post._id.toString(),
-  //         data: {
-  //           postId: post._id.toString(),
-  //         },
-  //       });
-  //     }
-  //     this.updateRank(config.weight.save, post._id.toString());
-  //   }
-  //   if (isSaved && !isFavourited) {
-  //     await this.userModel
-  //       .findByIdAndUpdate(
-  //         user._id,
-  //         { $pull: { favouritePosts: new Types.ObjectId(currentPostId) } },
-  //         { new: true },
-  //       )
-  //       .lean();
-  //     this.updateRank(-config.weight.save, post._id.toString());
-  //   }
   // }
 
   // public async LikeUsers(

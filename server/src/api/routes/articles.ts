@@ -95,6 +95,25 @@ export default (app: Router): void => {
   );
 
   route.post(
+    '/:id/favorite',
+    middlewares.isAuth,
+    middlewares.attachCurrentUser,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const articleServiceInstance = Container.get(ArticleService);
+        const article = await articleServiceInstance.FavouriteArticle(
+          req.params.id as string,
+          req.currentUser,
+          req.body.toFavorite,
+        );
+        return res.status(200).json({ success: true, data: article });
+      } catch (e) {
+        return next(e);
+      }
+    },
+  );
+
+  route.post(
     '/:id/remove',
     middlewares.isAuth,
     middlewares.attachCurrentUser,
@@ -151,25 +170,6 @@ export default (app: Router): void => {
   //           1,
   //         );
   //         return res.status(200).json({ success: true, data: comments });
-  //       } catch (e) {
-  //         return next(e);
-  //       }
-  //     },
-  //   );
-
-  //   route.post(
-  //     '/:id/favourite',
-  //     middlewares.isAuth,
-  //     middlewares.attachCurrentUser,
-  //     middlewares.isNotDemoUser,
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //       try {
-  //         const postServiceInstance = Container.get(PostService);
-  //         const post = await postServiceInstance.Favourite(
-  //           req.params.id as string,
-  //           req.currentUser,
-  //         );
-  //         return res.status(200).json({ success: true, data: post });
   //       } catch (e) {
   //         return next(e);
   //       }
