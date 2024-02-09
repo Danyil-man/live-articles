@@ -150,30 +150,29 @@ export default (app: Router): void => {
     },
   );
 
-  //   route.post(
-  //     '/:id/comment',
-  //     celebrate({
-  //       body: Joi.object({
-  //         text: Joi.string().required(),
-  //       }),
-  //     }),
-  //     middlewares.isAuth,
-  //     middlewares.attachCurrentUser,
-  //     middlewares.isNotDemoUser,
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //       try {
-  //         const postServiceInstance = Container.get(PostService);
-  //         const comment = await postServiceInstance.Comment(
-  //           req.body as ICommentInput,
-  //           req.params.id as string,
-  //           req.currentUser,
-  //         );
-  //         return res.status(200).json({ success: true, data: comment });
-  //       } catch (e) {
-  //         return next(e);
-  //       }
-  //     },
-  //   );
+  route.post(
+    '/:id/comment',
+    celebrate({
+      body: Joi.object({
+        text: Joi.string().required(),
+      }),
+    }),
+    middlewares.isAuth,
+    middlewares.attachCurrentUser,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const articleServiceInstance = Container.get(ArticleService);
+        await articleServiceInstance.Comment(
+          req.body as ICommentInput,
+          req.params.id as string,
+          req.currentUser,
+        );
+        return res.status(200).json({ success: true });
+      } catch (e) {
+        return next(e);
+      }
+    },
+  );
 
   //   route.get(
   //     '/:id/comment',
@@ -215,25 +214,6 @@ export default (app: Router): void => {
   //     },
   //   );
 
-  //   route.post(
-  //     '/:id/dislike',
-  //     middlewares.isAuth,
-  //     middlewares.attachCurrentUser,
-  //     middlewares.isNotDemoUser,
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //       try {
-  //         const postServiceInstance = Container.get(PostService);
-  //         const post = await postServiceInstance.Dislike(
-  //           req.params.id as string,
-  //           req.currentUser,
-  //         );
-  //         return res.status(200).json({ success: true, data: post });
-  //       } catch (e) {
-  //         return next(e);
-  //       }
-  //     },
-  //   );
-
   //   route.get(
   //     '/popular',
   //     middlewares.isAuth,
@@ -242,40 +222,6 @@ export default (app: Router): void => {
   //       try {
   //         const postServiceInstance = Container.get(PostService);
   //         const posts = await postServiceInstance.GetMostPopular(
-  //           req.currentUser as IUser,
-  //         );
-  //         return res.status(200).json({ success: true, data: posts });
-  //       } catch (e) {
-  //         return next(e);
-  //       }
-  //     },
-  //   );
-
-  //   route.get(
-  //     '/popular/recent',
-  //     middlewares.isAuth,
-  //     middlewares.attachCurrentUser,
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //       try {
-  //         const postServiceInstance = Container.get(PostService);
-  //         const posts = await postServiceInstance.GetMostPopularRecent(
-  //           req.currentUser as IUser,
-  //         );
-  //         return res.status(200).json({ success: true, data: posts });
-  //       } catch (e) {
-  //         return next(e);
-  //       }
-  //     },
-  //   );
-
-  //   route.get(
-  //     '/average',
-  //     middlewares.isAuth,
-  //     middlewares.attachCurrentUser,
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //       try {
-  //         const postServiceInstance = Container.get(PostService);
-  //         const posts = await postServiceInstance.GetAverage(
   //           req.currentUser as IUser,
   //         );
   //         return res.status(200).json({ success: true, data: posts });
