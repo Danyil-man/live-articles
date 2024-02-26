@@ -411,362 +411,81 @@ export default class PostService {
     return articles[0];
   }
 
-  // public async CommentReply(
-  //   commentInput: ICommentInput,
-  //   commentId: string,
-  //   user: IUser,
-  // ): Promise<IComment | any> {
-  //   let parentComment = await this.commentModel.findById(commentId);
-  //   if (!parentComment) {
-  //     throw new ErrorResponse(
-  //       i18next.t('comment_not_found', { lng: user?.language }),
-  //       404,
-  //     );
-  //   }
+  public async CreateCommentReply(
+    commentInput: ICommentInput,
+    commentId: string,
+    user: IUser,
+  ): Promise<IComment | any> {
+    const parentComment = await this.commentModel.findById(commentId);
 
-  //   const post = await this.postModel.findById(parentComment.post);
-  //   const isPostAuthor = post.author.toString() === user._id.toString();
-  //   const isAuthor = parentComment.author.toString() === user._id.toString();
-  //   const { mentions, users } = await this.getMentions(commentInput.text);
-  //   const hashtags = this.getHashtags(
-  //     commentInput.text,
-  //     parentComment.post.toString(),
-  //   );
-  //   const mainParent = parentComment.mainParent || commentId;
-  //   let comment = await this.commentModel.create({
-  //     ...commentInput,
-  //     mainParent,
-  //     parent: commentId,
-  //     post: parentComment.post,
-  //     author: user._id,
-  //     mentions,
-  //     hashtags,
-  //   });
-  //   comment = await comment.populate('author');
-  //   parentComment = await this.commentModel.findByIdAndUpdate(mainParent, {
-  //     $push: { replies: comment._id },
-  //   });
-  //   const userId = parentComment.author.toString();
-  //   const notificationServiceInstance = Container.get(NotificationService);
-  //   await this.postModel.findByIdAndUpdate(parentComment.post, {
-  //     $addToSet: { mentions, hashtags },
-  //   });
-  //   if (!isPostAuthor) {
-  //     this.updateRank(config.weight.comment, parentComment.post.toString());
-  //   }
-  //   if (!isAuthor) {
-  //     const userAuthor = await this.userModel
-  //       .findOne({
-  //         _id: userId,
-  //       })
-  //       .select('language');
-  //     notificationServiceInstance.SendPush({
-  //       user: userId,
-  //       content: i18next.t('comment_replied', {
-  //         username: user.username,
-  //         comment: commentInput.text,
-  //         lng: userAuthor?.language,
-  //       }),
-  //       type: NotificationType.replyNotifications,
-  //       sender: user._id.toString(),
-  //       post: parentComment.post.toString(),
-  //       data: {
-  //         postId: parentComment.post.toString(),
-  //         commentId: comment._id.toString(),
-  //       },
-  //     });
-  //   }
-  //   if (users.length) {
-  //     users.forEach((mention) => {
-  //       if (mention._id.toString() !== userId) {
-  //         notificationServiceInstance.SendPush({
-  //           user: mention._id.toString(),
-  //           content: i18next.t('comment_mentioned', {
-  //             username: user.username,
-  //             comment: commentInput.text,
-  //             lng: mention?.language,
-  //           }),
-  //           type: NotificationType.mentionNotifications,
-  //           sender: user._id.toString(),
-  //           post: parentComment.post.toString(),
-  //           data: {
-  //             postId: parentComment.post.toString(),
-  //             commentId: comment._id.toString(),
-  //           },
-  //         });
-  //       }
-  //     });
-  //   }
+    if (!parentComment) {
+      throw new ErrorResponse('Comment not found', 404);
+    }
 
-  //   const botAuthorOfParentComment = await this.userModel.findOne({
-  //     _id: parentComment.author,
-  //     isUserBot: true,
-  //   });
-  //   if (botAuthorOfParentComment) {
-  //     let time: number;
+    const mainParent = parentComment.mainParent || commentId;
+    let comment = await this.commentModel.create({
+      text: commentInput.text,
+      mainParent,
+      parent: commentId,
+      article: parentComment.article,
+      author: user._id,
+    });
+    comment = await comment.populate('author');
+    await this.commentModel.findByIdAndUpdate(commentId, {
+      $push: { replies: comment._id },
+    });
 
-  //     await this.userModel.updateOne(
-  //       {
-  //         _id: botAuthorOfParentComment._id,
-  //       },
-  //       { $inc: { successCommentDialogs: 1 } },
-  //     );
+    return comment;
+  }
 
-  //     const postDescription = await this.commentModel.findOne({
-  //       _id: post.authorComment,
-  //     });
+  public async LikeComment(
+    currentCommentId: string,
+    user: IUser,
+    toLike: boolean,
+  ): Promise<any> {
+    let comment = await this.commentModel
+      .findById(currentCommentId)
+      .populate('author', 'username avatar')
+      .lean();
 
-  //     const parentText = await this.commentModel.findOne({ _id: commentId });
+    if (!comment) {
+      throw new ErrorResponse('Comment not found', 404);
+    }
 
-  //     if (
-  //       process.env.NODE_ENV === 'development' ||
-  //       process.env.NODE_ENV === 'local'
-  //     ) {
-  //       time = Math.floor(Math.random() * (5 - 2 + 1)) + 2;
-  //     } else {
-  //       time = Math.floor(Math.random() * (45 - 15 + 1)) + 15;
-  //     }
+    const isCommentLiked =
+      comment.likes &&
+      comment.likes.some((userId) => userId.toString() === user._id.toString());
 
-  //     await this.agendaInstance.schedule(
-  //       `in ${time} minutes`,
-  //       'createCommentReply',
-  //       {
-  //         parentCommentType: parentComment.type,
-  //         parentCommentText: parentText.text,
-  //         postDescription: postDescription.text,
-  //         commentText: commentInput.text,
-  //         commentId: comment._id,
-  //         botAuthorOfParentComment,
-  //       },
-  //     );
-  //   }
-  //   return comment;
-  // }
+    if (toLike && !isCommentLiked) {
+      comment = await this.commentModel
+        .findByIdAndUpdate(
+          currentCommentId,
+          { $addToSet: { likes: user._id } },
+          { new: true },
+        )
+        .lean();
+    }
+    if (!toLike && isCommentLiked) {
+      comment = await this.commentModel
+        .findByIdAndUpdate(
+          currentCommentId,
+          { $pull: { likes: user._id } },
+          { new: true },
+        )
+        .lean();
+    }
+  }
 
-  // public async CommentLikeV3(
-  //   currentCommentId: string,
-  //   user: IUser,
-  //   isLiked: boolean,
-  // ): Promise<any> {
-  //   let comment = await this.commentModel
-  //     .findById(currentCommentId)
-  //     .populate('author', 'username avatar')
-  //     .lean();
-  //   if (!comment) {
-  //     throw new ErrorResponse(
-  //       i18next.t('comment_not_found', { lng: user?.language }),
-  //       404,
-  //     );
-  //   }
-  //   const isCommentLiked =
-  //     comment.likes &&
-  //     comment.likes.some((userId) => userId.toString() === user._id.toString());
-  //   const authorId = comment.author._id.toString();
-  //   const isAuthor = authorId === user._id.toString();
-  //   if (isLiked && !isCommentLiked) {
-  //     comment = await this.commentModel
-  //       .findByIdAndUpdate(
-  //         currentCommentId,
-  //         { $addToSet: { likes: user._id } },
-  //         { new: true },
-  //       )
-  //       .lean();
-  //     if (!isAuthor) {
-  //       const userAuthor = await this.userModel
-  //         .findOne({
-  //           _id: authorId,
-  //         })
-  //         .select('language');
-  //       const notificationServiceInstance = Container.get(NotificationService);
-  //       notificationServiceInstance.SendPush({
-  //         user: authorId,
-  //         content: i18next.t('comment_liked', {
-  //           username: user.username,
-  //           lng: userAuthor?.language,
-  //         }),
-  //         type: NotificationType.commentLikesNotifications,
-  //         sender: user._id.toString(),
-  //         post: comment.post.toString(),
-  //         data: {
-  //           postId: comment.post.toString(),
-  //           commentId: comment._id.toString(),
-  //         },
-  //       });
-  //     }
-  //   }
-  //   if (!isLiked && isCommentLiked) {
-  //     comment = await this.commentModel
-  //       .findByIdAndUpdate(
-  //         currentCommentId,
-  //         { $pull: { likes: user._id } },
-  //         { new: true },
-  //       )
-  //       .lean();
-  //   }
-  // }
-
-  // public async GetMostPopular(user?: IUser): Promise<string[]> {
-  //   const userServiceInstance = Container.get(UserService);
-  //   const notActiveIds = await userServiceInstance.GetNotActiveIds(user);
-  //   const posts = await this.postModel.aggregate([
-  //     { $match: { author: { $nin: notActiveIds } } },
-  //     { $unwind: '$likes' },
-  //     {
-  //       $group: {
-  //         _id: '$_id',
-  //         image: { $first: '$image' },
-  //         likes: { $push: '$likes' },
-  //         size: { $sum: 1 },
-  //       },
-  //     },
-  //     { $sort: { size: -1 } },
-  //   ]);
-  //   return posts.map((post) => post._id);
-  // }
-
-  // public async GetAllComments(
-  //   postId: string,
-  //   params: IPaginationParams,
-  //   user: IUser,
-  //   version: number,
-  // ): Promise<ICommentData> {
-  //   const limit = params.limit ? +params.limit : 0;
-  //   const offset = params.offset ? +params.offset : 0;
-  //   const query: any = {
-  //     parent: { $exists: false },
-  //     post: postId,
-  //   };
-  //   const data: ICommentData = {
-  //     total: 0,
-  //     result: [],
-  //   };
-  //   data.total = await this.commentModel.countDocuments(query);
-  //   if (params.lastCommentId) {
-  //     query._id =
-  //       version !== 1
-  //         ? { $gt: params.lastCommentId }
-  //         : { $lt: params.lastCommentId };
-  //     query.isAuthor = false;
-  //   }
-  //   const comments = await this.commentModel
-  //     .find(query)
-  //     .populate([
-  //       {
-  //         path: 'author',
-  //       },
-  //       {
-  //         path: 'replies',
-  //         options: {
-  //           sort: { createdAt: version !== 1 ? 1 : -1 },
-  //         },
-  //         populate: [
-  //           {
-  //             path: 'author',
-  //           },
-  //         ],
-  //       },
-  //     ])
-  //     .skip(offset)
-  //     .limit(limit)
-  //     .sort({ isAuthor: -1, createdAt: version !== 1 ? 1 : -1 })
-  //     .lean();
-  //   data.result = comments
-  //     .filter(
-  //       (comment: IComment) =>
-  //         !user.blockedUsers
-  //           .map((user) => user.toString())
-  //           .includes(comment.author._id.toString()) &&
-  //         (comment.author as IUser).status === 'ACTIVE',
-  //     )
-  //     .map((comment) => this.extendComment(comment, user, 2, version));
-
-  //   return data;
-  // }
-
-  // public async GetCommentReplies(
-  //   commentId: string,
-  //   params: IPaginationParams,
-  //   user: IUser,
-  //   version: number,
-  // ): Promise<ICommentData> {
-  //   const limit = params.limit ? +params.limit : 0;
-  //   const offset = params.offset ? +params.offset : 0;
-  //   const userServiceInstance = Container.get(UserService);
-  //   const notActiveIds = await userServiceInstance.GetNotActiveIds(user);
-  //   const data: ICommentData = {
-  //     total: 0,
-  //     result: [],
-  //   };
-  //   const query: any = {
-  //     mainParent: commentId,
-  //     author: { $nin: notActiveIds },
-  //   };
-  //   data.total = await this.commentModel.countDocuments(query);
-  //   if (params.lastCommentId) {
-  //     query._id =
-  //       version !== 1
-  //         ? { $gt: params.lastCommentId }
-  //         : { $lt: params.lastCommentId };
-  //   }
-  //   const comments = await this.commentModel
-  //     .find(query)
-  //     .populate([
-  //       {
-  //         path: 'author',
-  //       },
-  //       {
-  //         path: 'replies',
-  //         match: { author: { $nin: notActiveIds } },
-  //         options: {
-  //           sort: { createdAt: version !== 1 ? 1 : -1 },
-  //         },
-  //         populate: [
-  //           {
-  //             path: 'author',
-  //           },
-  //         ],
-  //       },
-  //     ])
-  //     .skip(offset)
-  //     .limit(limit)
-  //     .sort(version !== 1 ? 'createdAt' : '-createdAt')
-  //     .lean();
-  //   if (version === 3) {
-  //     data.result = comments.map((comment) => {
-  //       const optimizedComment = this.extendComment(
-  //         comment,
-  //         user,
-  //         null,
-  //         version,
-  //       );
-  //       return optimizedComment;
-  //     });
-  //   } else {
-  //     data.result = comments.map((comment) =>
-  //       this.extendComment(comment, user),
-  //     );
-  //   }
-
-  //   return data;
-  // }
-
-  // public async CommentRemove(commentId: string, user: IUser): Promise<void> {
-  //   const comment = await this.commentModel.findById(commentId);
-  //   if (!comment) {
-  //     throw new ErrorResponse(
-  //       i18next.t('comment_not_found', { lng: user?.language }),
-  //       404,
-  //     );
-  //   }
-  //   if (comment.author.toString() !== user._id.toString()) {
-  //     throw new ErrorResponse(
-  //       i18next.t('not_comment_author', { lng: user?.language }),
-  //       400,
-  //     );
-  //   }
-  //   await this.commentModel.findOneAndDelete({ _id: commentId });
-  //   this.updateRank(-config.weight.comment, comment.post.toString());
-  // }
+  public async DeleteComment(commentId: string, user: IUser): Promise<void> {
+    const comment = await this.commentModel.findById(commentId);
+    if (!comment) {
+      throw new ErrorResponse('Comment not found', 404);
+    }
+    if (comment.author.toString() !== user._id.toString()) {
+      throw new ErrorResponse('You are not the author of the comment', 400);
+    }
+    await this.commentModel.findOneAndDelete({ _id: commentId });
+  }
 
   public multerGetFile(
     req: Request & { file: MulterFile },
