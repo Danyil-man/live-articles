@@ -94,6 +94,14 @@ export default class PostService {
       throw new ErrorResponse('The error occurred with creating article');
     }
 
+    try {
+      await this.userModel.findByIdAndUpdate(user._id, {
+        $addToSet: { myArticles: article._id },
+      });
+    } catch (e) {
+      throw new ErrorResponse('Something went wrong with creating article');
+    }
+
     return {
       ...article,
       isAuthor: true,
@@ -391,6 +399,16 @@ export default class PostService {
     });
 
     return comment;
+  }
+
+  public async GetTheMostPopularArticle(): Promise<IArticle> {
+    let articles = await this.articleModel.find({
+      createdAt: { $gte: moment().subtract(30, 'days').toDate() },
+    });
+
+    articles = articles.sort((a, b) => b.likes.length - a.likes.length);
+
+    return articles[0];
   }
 
   // public async CommentReply(

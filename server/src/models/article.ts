@@ -42,4 +42,14 @@ const Article = new mongoose.Schema(
   { timestamps: true, versionKey: false },
 );
 
+Article.post('findOneAndDelete', async function (doc) {
+  const Comment = mongoose.model('Comment');
+  const User = mongoose.model('User');
+  await Comment.deleteMany({ _id: { $in: doc.comments } });
+  await User.updateMany(
+    {},
+    { $pull: { myArticles: doc._id, favouriteArticles: doc._id } },
+  );
+});
+
 export default mongoose.model<IArticle & mongoose.Document>('Article', Article);

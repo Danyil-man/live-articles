@@ -78,6 +78,21 @@ export default (app: Router): void => {
   );
 
   route.get(
+    '/popular',
+    middlewares.isAuth,
+    middlewares.attachCurrentUser,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const articleServiceInstance = Container.get(ArticleService);
+        const article = await articleServiceInstance.GetTheMostPopularArticle();
+        return res.status(200).json({ success: true, data: article });
+      } catch (e) {
+        return next(e);
+      }
+    },
+  );
+
+  route.get(
     '/:id',
     middlewares.isAuth,
     middlewares.attachCurrentUser,
@@ -173,61 +188,4 @@ export default (app: Router): void => {
       }
     },
   );
-
-  //   route.get(
-  //     '/:id/comment',
-  //     middlewares.isAuth,
-  //     middlewares.attachCurrentUser,
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //       try {
-  //         const postServiceInstance = Container.get(PostService);
-  //         const comments = await postServiceInstance.GetAllComments(
-  //           req.params.id as string,
-  //           req.query as any,
-  //           req.currentUser,
-  //           1,
-  //         );
-  //         return res.status(200).json({ success: true, data: comments });
-  //       } catch (e) {
-  //         return next(e);
-  //       }
-  //     },
-  //   );
-
-  //   route.get(
-  //     '/:id/likes',
-  //     middlewares.isAuth,
-  //     middlewares.attachCurrentUser,
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //       try {
-  //         const postServiceInstance = Container.get(PostService);
-  //         const users = await postServiceInstance.LikeUsers(
-  //           req.query as any,
-  //           req.params.id as string,
-  //           1,
-  //           req.currentUser,
-  //         );
-  //         return res.status(200).json({ success: true, data: users });
-  //       } catch (e) {
-  //         return next(e);
-  //       }
-  //     },
-  //   );
-
-  //   route.get(
-  //     '/popular',
-  //     middlewares.isAuth,
-  //     middlewares.attachCurrentUser,
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //       try {
-  //         const postServiceInstance = Container.get(PostService);
-  //         const posts = await postServiceInstance.GetMostPopular(
-  //           req.currentUser as IUser,
-  //         );
-  //         return res.status(200).json({ success: true, data: posts });
-  //       } catch (e) {
-  //         return next(e);
-  //       }
-  //     },
-  //   );
 };
