@@ -25,6 +25,7 @@ export interface IUser {
   gender?: Gender;
   avatar?: string;
   age?: number;
+  biography?: string;
   favouriteArticles: PopulatedDoc<IArticle, Types.ObjectId>[];
   myArticles: PopulatedDoc<IArticle, Types.ObjectId>[];
   createdAt?: Date;
@@ -43,6 +44,7 @@ export interface IUserInputUpdate {
   email?: string;
   gender?: Gender;
   age?: number;
+  biography?: string;
 }
 
 export interface IUserData {

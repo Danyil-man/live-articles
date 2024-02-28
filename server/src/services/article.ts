@@ -1,24 +1,16 @@
-import { Service, Inject, Container } from 'typedi';
-import { Document, ObjectId, PopulatedDoc, Types } from 'mongoose';
+import { Service, Inject } from 'typedi';
+import { Document, Types } from 'mongoose';
 import {
   IArticle,
   IArticleData,
   IArticleInput,
   IArticleParams,
 } from '../interfaces/IArticle';
-import {
-  IComment,
-  ICommentData,
-  ICommentInput,
-  ICommentResponse,
-} from '../interfaces/IComments';
-import { IUser, IUserData, Role } from '../interfaces/IUser';
+import { IComment, ICommentInput } from '../interfaces/IComments';
+import { IUser } from '../interfaces/IUser';
 import ErrorResponse from '../utils/errorResponse';
 import { IPagination } from '../interfaces/IPagination';
-//import UserService from './user';
-import axios from 'axios';
 import cloudinary from '../storage/cloudinary';
-import config from '../config';
 import moment from 'moment';
 import { Request, Response } from 'express';
 import { MulterFile } from '../interfaces/IMulter';

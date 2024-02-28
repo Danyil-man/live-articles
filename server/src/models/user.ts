@@ -39,6 +39,8 @@ const User = new mongoose.Schema(
 
     age: Number,
 
+    biography: String,
+
     favouriteArticles: [
       {
         type: mongoose.Schema.Types.ObjectId,
