@@ -1,0 +1,33 @@
+@import "../../styles/index.scss";
+
+.header {
+  width: 100%;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 30px 20px;
+  background-color: $main-blue;
+  color: #ffffff;
+
+  .leftSide {
+    font-size: $large-text;
+    font-family: $style-lora;
+    font-weight: 500;
+  }
+
+  .rightSide {
+    font-size: $middle-text;
+    font-family: $style-montserrat;
+  }
+
+  &:after {
+    content: "";
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: $main-yellow;
+  }
+}
