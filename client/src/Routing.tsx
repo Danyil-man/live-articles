@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { publicRoutes, signedRoutes } from "./routes/Routes";
 import Header from "./components/header/Header";
+import AuthPage from "./pages/auth/Auth";
 
 const Routing = () => {
   const isAuth = true;
@@ -23,7 +24,7 @@ const Routing = () => {
             element={<route.component />}
           />
         ))}
-        <Route path="*" element={<>Not Found</>} />
+        <Route path="*" element={<AuthPage />} />
       </Routes>
     </Router>
   );
