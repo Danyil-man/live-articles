@@ -3,121 +3,126 @@
 .wrapper {
   width: 100%;
   height: calc(100vh - 81px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
   background-color: $main-blue;
 }
 
-.container {
+.formTitle {
+  font-family: $style-lora;
+  font-size: $extra-large-text;
+  font-weight: 700;
+}
+
+.formFields {
+  //border: 1px solid #000;
+  // border-top-left-radius: 24px;
+  // border-top-right-radius: 24px;
+  // border-bottom-right-radius: 24px;
+  // border-bottom-left-radius: 24px;
+
+  .formField {
+    width: 100%;
+    margin-bottom: 20px;
+
+    .inputItem {
+      width: 100%;
+      color: #000;
+      font-size: $middle-text;
+      font-family: $style-montserrat;
+      text-decoration: none;
+      outline: none;
+      transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      border: none;
+      border-bottom: 1px solid #000;
+      padding: 10px;
+    }
+  }
+}
+
+.strength {
+  text-align: left;
+  height: 30px;
+  text-transform: capitalize;
+  color: $main-blue;
+  font-family: $style-montserrat;
+  font-weight: 500;
+}
+
+.bars {
+  margin: 8px 0;
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.bars div {
+  height: 6px;
+  border-radius: 3px;
+  transition: 0.4s;
+  width: 0%;
+}
+
+.bars.weak div {
+  background: #e24c71;
+  width: 33.33%;
+}
+
+.bars.medium div {
+  background: #f39845;
+  width: 66.66%;
+}
+
+.bars.strong div {
+  background: #57c558;
   width: 100%;
-  max-width: 1080px;
-  height: 800px;
-  background-color: #fff;
-  border-radius: 48px;
-  box-shadow: 0px 0px 50px 5px rgba(255, 255, 255, 0.5);
+}
 
-  .form {
-    width: 540px;
+.formFooter {
+  width: 100%;
+  margin-top: 50px;
+
+  .submitBtn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 14px;
+    background: none;
+    background-color: $main-blue;
+    color: #fff;
+    border: none;
+    font-size: $middle-text;
+    font-family: $style-montserrat;
+    cursor: pointer;
+
+    &:hover {
+      transition: 0.2s ease-in-out;
+      box-shadow: 0px 0px 5px 3px $main-blue;
+      //background-color: #fff;
+      //color: $main-blue;
+      //border: 1px solid $main-blue;
+    }
+  }
+
+  .formFooterNavigation {
+    margin-top: 10px;
     display: flex;
-    flex-direction: column;
-    text-align: center;
-    padding: 40px;
+    justify-content: center;
 
-    .formTitle {
-      font-family: $style-lora;
-      font-size: $extra-large-text;
-      font-weight: 700;
-
-      //   &:after {
-      //     content: "";
-      //     position: absolute;
-      //     bottom: -10px;
-      //     left: 0;
-      //     right: 0;
-      //     width: 500px;
-      //     height: 3px;
-      //     background-color: $main-blue;
-      //   }
-    }
-
-    .formFields {
+    .formNavigation {
       width: 100%;
-      padding: 20px;
-      margin-top: 50px;
-      border: 1px solid #000;
-      border-top-left-radius: 48px;
-      border-top-right-radius: 48px;
-      border-bottom-right-radius: 48px;
-      border-bottom-left-radius: 48px;
-
-      .formField {
-        width: 100%;
-        margin-bottom: 20px;
-
-        .inputItem {
-          width: 100%;
-          color: #000;
-          font-size: $middle-text;
-          font-family: $style-montserrat;
-          text-decoration: none;
-          outline: none;
-          transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
-          border: none;
-          border-bottom: 1px solid #000;
-          padding: 10px;
-        }
-      }
-    }
-
-    .formFooter {
-      width: 100%;
-      margin-top: 50px;
-
-      .submitBtn {
-        width: 100%;
-        padding: 10px;
-        border-radius: 14px;
-        background: none;
-        background-color: $main-blue;
-        color: #fff;
-        border: none;
-        font-size: $middle-text;
+      display: flex;
+      justify-content: center;
+      .questionTag {
+        margin-right: 5px;
+        font-size: $small-text;
         font-family: $style-montserrat;
-        cursor: pointer;
-
+      }
+      .link {
+        font-size: $small-text;
+        font-family: $style-montserrat;
         &:hover {
           transition: 0.2s ease-in-out;
-          background-color: #fff;
-          color: $main-blue;
-          border: 1px solid $main-blue;
-        }
-      }
-
-      .formFooterNavigation {
-        margin-top: 10px;
-        display: flex;
-        justify-content: center;
-
-        .formNavigation {
-          width: 100%;
-          display: flex;
-          justify-content: center;
-          .questionTag {
-            margin-right: 5px;
-            font-size: $small-text;
-            font-family: $style-montserrat;
-          }
-          .link {
-            font-size: $small-text;
-            font-family: $style-montserrat;
-            &:hover {
-              transition: 0.2s ease-in-out;
-              color: #000;
-            }
-          }
+          color: #000;
         }
       }
     }

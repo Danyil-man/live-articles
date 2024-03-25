@@ -18,7 +18,7 @@ import multer from 'multer';
 import { ICategory } from '../interfaces/ICategory';
 
 @Service()
-export default class PostService {
+export default class ArticleService {
   constructor(
     @Inject('articleModel') private articleModel: Models.ArticleModel,
     @Inject('categoryModel') private categoryModel: Models.CategoryModel,
