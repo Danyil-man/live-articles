@@ -25,6 +25,7 @@ import {
   Grid,
   Input,
   InputLabel,
+  Stack,
   Typography,
 } from "@mui/material";
 
@@ -132,7 +133,14 @@ const AuthPage = () => {
   return (
     <Container
       maxWidth={false}
-      sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      sx={{
+        width: "100%",
+        height: "calc(100vh - 80.5px)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#0c356a",
+      }}
       className={style.wrapper}
     >
       <Box
@@ -141,11 +149,11 @@ const AuthPage = () => {
           justifyContent: "center",
           alignItems: "center",
           width: "100%",
-          maxWidth: "1080px",
-          height: "800px",
+          maxWidth: "600px",
           backgroundColor: "white",
-          borderRadius: "48px",
+          borderRadius: "24px",
           boxShadow: "0px 0px 50px 5px rgba(255, 255, 255, 0.5)",
+          p: "20px",
         }}
       >
         <Box
@@ -153,21 +161,15 @@ const AuthPage = () => {
             display: "flex",
             flexDirection: "column",
             textAlign: "center",
-            width: "540px",
+            width: "500px",
           }}
         >
           <Box component="form" onSubmit={handleSubmit}>
             <h1 className={style.formTitle}>Sign up</h1>
-            <Box
-              sx={{ width: "100%", padding: "20px", marginTop: "50px" }}
-              className={style.formFields}
-            >
+            <Stack spacing={2} sx={{ my: "20px" }}>
               {/* Username form control */}
-              <Box sx={{ width: "100%", marginBottom: "20px" }}>
-                <FormControl
-                  className={style.formControl}
-                  sx={{ width: "100%" }}
-                >
+              <Box>
+                <FormControl sx={{ width: "100%" }}>
                   <InputLabel required={true}>Username</InputLabel>
                   <Input
                     id="user"
@@ -184,7 +186,7 @@ const AuthPage = () => {
                 </FormControl>
               </Box>
               {/* Email form control */}
-              <Box sx={{ width: "100%", marginBottom: "20px" }}>
+              <Box>
                 <FormControl sx={{ width: "100%" }}>
                   <InputLabel required={true}>Email address</InputLabel>
                   <Input
@@ -201,7 +203,7 @@ const AuthPage = () => {
                 </FormControl>
               </Box>
               {/* Password form control */}
-              <Box sx={{ width: "100%", marginBottom: "20px" }}>
+              <Box>
                 <FormControl sx={{ width: "100%" }}>
                   <InputLabel required={true}>Password</InputLabel>
                   <Input
@@ -213,12 +215,12 @@ const AuthPage = () => {
                     error={passwordError}
                   />
                   <FormHelperText id="password-helper" error={passwordError}>
-                    {/* {helperText} */} Helper text
+                    {/* {helperText} */}
                   </FormHelperText>
                 </FormControl>
               </Box>
               {/* Confirm password form control */}
-              <Box sx={{ width: "100%", marginBottom: "20px" }}>
+              <Box>
                 <FormControl required={true} sx={{ width: "100%" }}>
                   <InputLabel>Confirm password</InputLabel>
                   <Input
@@ -233,7 +235,7 @@ const AuthPage = () => {
                     id="confirm-password-helper"
                     error={confirmPasswordError}
                   >
-                    {/* {helperText} */} Helper text
+                    {/* {helperText} */}
                   </FormHelperText>
                 </FormControl>
               </Box>
@@ -243,7 +245,7 @@ const AuthPage = () => {
               <div className={style.strength}>
                 {passwordStrength && `${passwordStrength} password`}
               </div>
-            </Box>
+            </Stack>
             <div className={style.formFooter}>
               <button className={style.submitBtn} type="submit">
                 Sign up

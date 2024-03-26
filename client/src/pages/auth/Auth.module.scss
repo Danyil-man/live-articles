@@ -1,40 +1,26 @@
 @import "../../styles/index.scss";
 
-.wrapper {
-  width: 100%;
-  height: calc(100vh - 81px);
-  background-color: $main-blue;
-}
-
 .formTitle {
   font-family: $style-lora;
   font-size: $extra-large-text;
   font-weight: 700;
 }
 
-.formFields {
-  //border: 1px solid #000;
-  // border-top-left-radius: 24px;
-  // border-top-right-radius: 24px;
-  // border-bottom-right-radius: 24px;
-  // border-bottom-left-radius: 24px;
+.formField {
+  width: 100%;
+  margin-bottom: 20px;
 
-  .formField {
+  .inputItem {
     width: 100%;
-    margin-bottom: 20px;
-
-    .inputItem {
-      width: 100%;
-      color: #000;
-      font-size: $middle-text;
-      font-family: $style-montserrat;
-      text-decoration: none;
-      outline: none;
-      transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
-      border: none;
-      border-bottom: 1px solid #000;
-      padding: 10px;
-    }
+    color: #000;
+    font-size: $middle-text;
+    font-family: $style-montserrat;
+    text-decoration: none;
+    outline: none;
+    transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    border-bottom: 1px solid #000;
+    padding: 10px;
   }
 }
 
@@ -80,7 +66,6 @@
 
 .formFooter {
   width: 100%;
-  margin-top: 50px;
 
   .submitBtn {
     width: 100%;
